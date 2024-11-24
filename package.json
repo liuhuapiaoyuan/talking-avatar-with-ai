@@ -10,6 +10,7 @@
   "scripts": {
     "client": "yarn --cwd apps/frontend dev",
     "server": "yarn --cwd apps/backend dev",
+    "huoshan:publish": "yarn --cwd apps/huoshan publish",
     "dev": "npm-run-all --parallel client server"
   },
   "devDependencies": {

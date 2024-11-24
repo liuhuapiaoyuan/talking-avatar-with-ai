@@ -49,7 +49,7 @@ async function sendDefaultMessages({ userMessage }) {
 
 const defaultResponse = [
   {
-    text: "I'm sorry, there seems to be an error with my brain, or I didn't understand. Could you please repeat your question?",
+    text: "很抱歉，我不知道你在说什么，要不您在问我一次?",
     facialExpression: "sad",
     animation: "Idle",
   },

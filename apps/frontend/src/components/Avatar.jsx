@@ -10,12 +10,12 @@ import visemesMapping from "../constants/visemesMapping";
 import morphTargets from "../constants/morphTargets";
 
 export function Avatar(props) {
-  const { nodes, materials, scene } = useGLTF("/models/avatar.glb");
-  const { animations } = useGLTF("/models/animations.glb");
-  const { message, onMessagePlayed } = useSpeech();
+  const { nodes, materials, scene } = useGLTF("https://cdn.kedao.ggss.club/ai-avatar/models/avatar.glb");
+  const { animations } = useGLTF("https://cdn.kedao.ggss.club/ai-avatar/models/animations.glb");
+  const { message, onMessagePlayed ,audioRef } = useSpeech();
   const [lipsync, setLipsync] = useState();
   const [setupMode, setSetupMode] = useState(false);
-
+  const audio = audioRef.current;
   useEffect(() => {
     if (!message) {
       setAnimation("Idle");
@@ -24,10 +24,7 @@ export function Avatar(props) {
     setAnimation(message.animation);
     setFacialExpression(message.facialExpression);
     setLipsync(message.lipsync);
-    const audio = new Audio("data:audio/mp3;base64," + message.audio);
-    audio.play();
-    setAudio(audio);
-    audio.onended = onMessagePlayed;
+ 
   }, [message]);
 
 
@@ -62,7 +59,7 @@ export function Avatar(props) {
 
   const [blink, setBlink] = useState(false);
   const [facialExpression, setFacialExpression] = useState("");
-  const [audio, setAudio] = useState();
+  // const [audio, setAudio] = useState();
 
   useFrame(() => {
     !setupMode &&
@@ -87,6 +84,7 @@ export function Avatar(props) {
 
     const appliedMorphTargets = [];
     if (message && lipsync) {
+      
       const currentAudioTime = audio.currentTime;
       for (let i = 0; i < lipsync.mouthCues.length; i++) {
         const mouthCue = lipsync.mouthCues[i];
@@ -241,4 +239,4 @@ export function Avatar(props) {
   );
 }
 
-useGLTF.preload("/models/avatar.glb");
+useGLTF.preload("https://cdn.kedao.ggss.club/ai-avatar/models/avatar.glb");

@@ -1,11 +1,34 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useSpeech } from "../hooks/useSpeech";
+import { AudioPlayerQueue } from "../lib/AudioPlayerQueue";
 
 export const ChatInterface = ({ hidden, ...props }) => {
   const input = useRef();
-  const { tts, loading, message, startRecording, stopRecording, recording } = useSpeech();
+  const { tts, loading, audioRef,message, asrText,onMessagePlayed,startRecording, stopRecording, recording } = useSpeech();
+  
+  const first = useRef(true);
+
+  useEffect(()=>{
+    if (message) {
+      audioRef.current.src = "data:audio/mp3;base64," + message.audio
+      audioRef.current.play()
+      audio.onended = onMessagePlayed;
+    }
+  },[message])
+  const triggerAudio = () => {
+    if (!first.current) {
+      return;
+    }
+    first.current = false;
+    const audio = audioRef.current;
+    audio.play();
+    setTimeout(() => {
+      audio.pause();
+    }, 20);
+  }
 
   const sendMessage = () => {
+    triggerAudio()
     const text = input.current.value;
     if (!loading && !message) {
       tts(text);
@@ -16,18 +39,23 @@ export const ChatInterface = ({ hidden, ...props }) => {
     return null;
   }
 
+  const showAsr = asrText.length > 0 ? asrText : "请说话...";
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 z-10 flex justify-between p-4 flex-col pointer-events-none">
       <div className="self-start backdrop-blur-md bg-white bg-opacity-50 p-4 rounded-lg">
-        <h1 className="font-black text-xl text-gray-700">Digital Human</h1>
+        <h1 className="font-black text-xl text-gray-700">数字人DEMO</h1>
         <p className="text-gray-600">
-          {loading ? "Loading..." : "Type a message and press enter to chat with the AI."}
+          {recording  ?  (showAsr): (loading ? "思考中..." : "输入内容或者语音来跟我对话吧。")}
+           
         </p>
       </div>
       <div className="w-full flex flex-col items-end justify-center gap-4"></div>
       <div className="flex items-center gap-2 pointer-events-auto max-w-screen-sm w-full mx-auto">
         <button
-          onClick={recording ? stopRecording : startRecording}
+          onClick={()=>{
+            triggerAudio()
+            recording ? stopRecording() : startRecording()
+          }}
           className={`bg-gray-500 hover:bg-gray-600 text-white p-4 px-4 font-semibold uppercase rounded-md ${
             recording ? "bg-red-500 hover:bg-red-600" : ""
           } ${loading || message ? "cursor-not-allowed opacity-30" : ""}`}
@@ -49,8 +77,8 @@ export const ChatInterface = ({ hidden, ...props }) => {
         </button>
 
         <input
-          className="w-full placeholder:text-gray-800 placeholder:italic p-4 rounded-md bg-opacity-50 bg-white backdrop-blur-md"
-          placeholder="Type a message..."
+          className="flex-1 placeholder:text-gray-800 placeholder:italic p-4 rounded-md bg-opacity-50 bg-white backdrop-blur-md"
+          placeholder="输入一个话题"
           ref={input}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -61,11 +89,11 @@ export const ChatInterface = ({ hidden, ...props }) => {
         <button
           disabled={loading || message}
           onClick={sendMessage}
-          className={`bg-gray-500 hover:bg-gray-600 text-white p-4 px-10 font-semibold uppercase rounded-md ${
+          className={`bg-gray-500 w-20 hover:bg-gray-600 text-white p-4   font-semibold uppercase rounded-md ${
             loading || message ? "cursor-not-allowed opacity-30" : ""
           }`}
         >
-          Send
+          发送
         </button>
       </div>
     </div>

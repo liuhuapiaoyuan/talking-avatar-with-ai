@@ -1,0 +1,23 @@
+{
+    "name": "huoshan-audio",
+    "version": "1.0.3",
+    "description": "火山引擎音频处理",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc  --declaration",
+        "publish": "yarn run build && npm version patch && npm publish"
+    },
+    "dependencies": {
+        "ws": "^8.18.0"
+    },
+    "devDependencies": {
+        "@types/ws": "^8.5.13",
+        "typescript": "^5.0.0"
+    },
+    "author": "liuhuapiaoyuan",
+    "license": "MIT"
+}

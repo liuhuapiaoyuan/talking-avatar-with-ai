@@ -17,4 +17,17 @@ async function convertAudioToText({ audioData }) {
   return transcribedText;
 }
 
-export { convertAudioToText };
+/**
+ * mp3转
+ * @param {*} outputPath 
+ * @returns 
+ */
+async function convertBlobToText(blob) {
+   
+  const loader = new OpenAIWhisperAudio(blob, { clientOptions: { apiKey: openAIApiKey } });
+  const doc = (await loader.load()).shift();
+  const transcribedText = doc.pageContent;
+  return transcribedText;
+}
+
+export { convertAudioToText,convertBlobToText };

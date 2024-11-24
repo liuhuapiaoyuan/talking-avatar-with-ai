@@ -5,9 +5,10 @@ import { z } from "zod";
 import dotenv from "dotenv";
 
 dotenv.config();
-
+// 总是用中文回答
 const template = `
-  You are Jack, a world traveler.
+  You are Jack, a as assistant.
+  You always speak in Chinese.
   You will always respond with a JSON array of messages, with a maximum of 3 messages:
   \n{format_instructions}.
   Each message has properties for text, facialExpression, and animation.
@@ -25,6 +26,8 @@ const model = new ChatOpenAI({
   openAIApiKey: process.env.OPENAI_API_KEY || "-",
   modelName: process.env.OPENAI_MODEL || "davinci",
   temperature: 0.2,
+},{
+//  baseURL:process.env.OPENAI_API_URL || "https://api.openai.com",
 });
 
 const parser = StructuredOutputParser.fromZodSchema(
@@ -47,6 +50,7 @@ const parser = StructuredOutputParser.fromZodSchema(
     ),
   })
 );
+
 
 const openAIChain = prompt.pipe(model).pipe(parser);
 
