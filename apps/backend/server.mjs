@@ -43,21 +43,26 @@ app.use(sessionStore);
 
 
 
-app.post("/", async (res) => {
+app.get("/", async (_req,res) => {
   res.send({code:0});
 }); 
 
 
 app.post("/tts", async (req, res) => {
+   // 设置SSE响应头
+   res.setHeader('Cache-Control', 'no-cache');
+   res.setHeader('Connection', 'keep-alive');
   const userMessage = await req.body.message;
   const bot = getBot(req)
   const result =await  bot.chat(userMessage)
-  const messages = []
   const generator = batchConvertTextToSpeech({ messages: result })
   for await (const message of generator) {
-    messages.push(message)
+    const {audio,lipsync,...body} = message
+    res.write(`data: body: ${JSON.stringify(body)}\n\n`);
+    res.write(`data: lipsync: ${JSON.stringify(lipsync)}\n\n`);
+    res.write(`data: audio: ${audio}\n\n`);
   }
-  res.send({ messages: messages });
+  res.end();
 }); 
 
 
@@ -133,7 +138,7 @@ wsServer.on('request', async request => {
           text: text
         }
       ))
-      createTimmer(1000)
+      createTimmer(800)
     }
   })
 
@@ -155,7 +160,7 @@ wsServer.on('request', async request => {
           stopAsr()
         }
       } else if (message.type === 'binary') {
-        // 接受音频消息保存
+        // 接受音频消息保存 
           huoshan.post(message.binaryData).catch(()=>{
 
           })
