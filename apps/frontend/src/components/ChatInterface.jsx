@@ -1,30 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useSpeech } from "../hooks/useSpeech";
-function base64ToBlob(base64, fileType) {
-  // let typeHeader = 'data:audio/' + fileType + ';base64,'; // 定义base64 头部文件类型
-  // let audioSrc = typeHeader + base64; // 拼接最终的base64
-  // let arr = audioSrc.split(',');
-  // let array = arr[0].match(/:(.*?);/);
-  // let mime = (array && array.length > 1 ? array[1] : type) || type;
-  // let bytes = window.atob(arr[1]);
-  // let ab = new ArrayBuffer(bytes.length);
-  // let ia = new Uint8Array(ab);
-  // for (let i = 0; i < bytes.length; i++) {
-  //   ia[i] = bytes.charCodeAt(i);
-  // }
-  // console.log("mimemimemime", mime)
-  // return new Blob([ab], {
-  //   type: mime
-  // });
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  const arrayBuffer = bytes.buffer;
-  return new Blob([arrayBuffer], { type: 'audio/mp3' });
-}
 export const ChatInterface = ({ hidden, ...props }) => {
   const input = useRef();
   const { tts, loading, audioRef, message, asrText, onMessagePlayed, startRecording, stopRecording, recording } = useSpeech();
@@ -32,15 +7,7 @@ export const ChatInterface = ({ hidden, ...props }) => {
   const first = useRef(true);
 
   useEffect(() => {
-    if (message) {
-      // message.audio
-      //const audioBlob = base64ToBlob(message.audio, 'mp3');
-      //const buffer = new Uint8Array(message.audio.data);
-
-      //const audioBlob = new Blob([buffer], { type: 'audio/mp3' });
-      //const audioUrl = URL.createObjectURL( new Blob([buffer.buffer], { type: 'audio/mp3' }));
-      // base64转buffer
-
+    if (message) { 
       const audioUrl = "data:audio/mp3;base64," + message.audio
       try {
         audioRef.current.src = audioUrl
