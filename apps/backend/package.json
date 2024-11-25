@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node server.mjs",
-    "dev": "nodemon server.mjs --ext js"
+    "dev": "nodemon "
   },
   "dependencies": {
     "@coze/api": "^1.0.10",

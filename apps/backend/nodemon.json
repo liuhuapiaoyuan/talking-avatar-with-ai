@@ -1,0 +1,7 @@
+{
+    "watch": ["src",".env","server.mjs"],
+    "ext": "js,json,mjs,.env",
+    "ignore": ["test"],
+    "exec": "node server.mjs"
+  }
+  

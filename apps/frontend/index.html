@@ -18,5 +18,13 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+      // VConsole will be exported to `window.VConsole` by default.
+      // 判断参数增加了debug才会显示
+      if (window.location.href.indexOf('debug') > -1) {
+        var vConsole = new window.VConsole();
+      }
+    </script>
   </body>
 </html>

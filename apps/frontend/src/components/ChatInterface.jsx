@@ -1,7 +1,14 @@
 import { useEffect, useRef } from "react";
 import { useSpeech } from "../hooks/useSpeech";
-import { AudioPlayerQueue } from "../lib/AudioPlayerQueue";
-
+function base64ToBuffer(base64) {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
 export const ChatInterface = ({ hidden, ...props }) => {
   const input = useRef();
   const { tts, loading, audioRef,message, asrText,onMessagePlayed,startRecording, stopRecording, recording } = useSpeech();
@@ -11,9 +18,12 @@ export const ChatInterface = ({ hidden, ...props }) => {
   useEffect(()=>{
     if (message) {
       // message.audio
-      //const audioBlob = new Blob([message.audio], { type: 'audio/mp3' });
-      //const audioUrl = URL.createObjectURL(audioBlob);
-      const audioUrl = "data:audio/mp3;base64," + message.audio
+      const buffer = base64ToBuffer(message.audio);
+      const audioBlob = new Blob([buffer], { type: 'audio/mp3' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      // base64转buffer
+
+      //const audioUrl = "data:audio/mp3;base64," + message.audio
       audioRef.current.src = audioUrl
       audioRef.current.play()
       audio.onended = onMessagePlayed;
