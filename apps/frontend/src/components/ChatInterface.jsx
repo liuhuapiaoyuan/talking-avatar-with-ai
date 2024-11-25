@@ -10,7 +10,11 @@ export const ChatInterface = ({ hidden, ...props }) => {
 
   useEffect(()=>{
     if (message) {
-      audioRef.current.src = "data:audio/mp3;base64," + message.audio
+      // message.audio
+      //const audioBlob = new Blob([message.audio], { type: 'audio/mp3' });
+      //const audioUrl = URL.createObjectURL(audioBlob);
+      const audioUrl = "data:audio/mp3;base64," + message.audio
+      audioRef.current.src = audioUrl
       audioRef.current.play()
       audio.onended = onMessagePlayed;
     }

@@ -9,8 +9,10 @@
   ],
   "scripts": {
     "client": "yarn --cwd apps/frontend dev",
+    "client:build": "yarn --cwd apps/frontend build",
     "server": "yarn --cwd apps/backend dev",
-    "huoshan:publish": "yarn --cwd apps/huoshan publish",
+    "server:start": "yarn --cwd apps/backend start",
+    "huoshan:publish": "yarn --cwd apps/huoshan release",
     "dev": "npm-run-all --parallel client server"
   },
   "devDependencies": {

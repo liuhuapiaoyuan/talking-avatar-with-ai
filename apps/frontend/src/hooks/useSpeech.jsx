@@ -18,7 +18,7 @@ const SpeechContext = createContext();
 function connectWebSocket() {
   // 获得当前请求
   const currentUrl = new URL(window.location.href);
-  const wsurl = `${currentUrl.protocol === 'https:' ? 'wss' : 'ws'}://${currentUrl.host}${backendUrl}`;
+  const wsurl = `${currentUrl.protocol === 'https:' ? 'wss' : 'ws'}://${currentUrl.host}${backendUrl}/ws`;
   console.log("Connecting to WebSocket:", wsurl);
   const ws = new WebSocket(wsurl);
   return new Promise((resolve,reject) => {

@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  ai-human-server:
+    image: liuhuapiaoyuan/ai-human-server
+    env_file:
+      - .env
+
+  ai-human:
+    image: liuhuapiaoyuan/ai-human
+    ports:
+      - "82:80" 
+    environment:
+      - BACKEND_API=http://ai-human-server:3000/

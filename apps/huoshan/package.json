@@ -1,6 +1,6 @@
 {
     "name": "huoshan-audio",
-    "version": "1.0.3",
+    "version": "1.0.14",
     "description": "火山引擎音频处理",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -9,9 +9,11 @@
     ],
     "scripts": {
         "build": "tsc  --declaration",
-        "publish": "yarn run build && npm version patch && npm publish"
+        "dev": "tsc -w  --declaration",
+        "release": "yarn run build && npm version patch &&  npm publish"
     },
     "dependencies": {
+        "nanoid": "^3.3.5",
         "ws": "^8.18.0"
     },
     "devDependencies": {

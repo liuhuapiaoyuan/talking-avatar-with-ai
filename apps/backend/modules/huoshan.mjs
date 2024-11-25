@@ -1,8 +1,8 @@
 
 
 import {HuoshanTTS,HuoshanClient} from 'huoshan-audio'
-import fs from 'fs'
-async function convertTextToSpeech({ text, fileName }) {
+async function convertTextToSpeech({ text }) {
+   const time = Date.now();
     let ttsOption = {};
     if (process.env.TTS_HUOSHAN_CONFIG) {
       try {
@@ -22,9 +22,33 @@ async function convertTextToSpeech({ text, fileName }) {
         }
       );
 
-    const blob = await  tts.synthesize(text);
-    // 保存到fileName
-    fs.writeFileSync(fileName, blob);
+    const resp = await tts.tts(text)
+    console.log(`[HUOSHAN] Converted text to speech in ${Date.now() - time}ms`)
+    return resp
+}
+
+/**
+ * 批量处理，带有口型数据
+ * @param {*} messages 
+ */
+export async function* batchConvertTextToSpeech({messages}) {
+  for (let index = 0; index < messages.length; index++) {
+    const message = messages[index];
+    try { 
+      const { data,addition:{frontend:{phonemes}} } = await convertTextToSpeech({ text: message.text });
+      const mouthCues = phonemes.map(z => ({
+        start: z.start_time,
+        end: z.end_time,
+        value: z.phone
+      }));
+      //转base64
+      const audio = Buffer.from(data).toString('base64');
+      yield {...message,lipsync:{mouthCues} , audio}
+    } catch (error) {
+      console.error(`Error while processing message ${index}:`, error);
+      yield { ...message, error: true, errorMessage: error.message };
+    }
+  }
 
 }
   

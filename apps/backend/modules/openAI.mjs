@@ -3,21 +3,24 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StructuredOutputParser } from "langchain/output_parsers";
 import { z } from "zod";
 import dotenv from "dotenv";
+import { defaultResponse } from "./defaultMessages.mjs";
 
 dotenv.config();
 // 总是用中文回答
 const template = `
   You are Jack, a as assistant.
   You always speak in Chinese.
-  You will always respond with a JSON array of messages, with a maximum of 3 messages:
+  You will always respond with a json array of messages, with a maximum of 3 messages:
   \n{format_instructions}.
   Each message has properties for text, facialExpression, and animation.
   The different facial expressions are: smile, sad, angry, surprised, funnyFace, and default.
   The different animations are: Idle, TalkingOne, TalkingThree, SadIdle, Defeated, Angry, 
   Surprised, DismissingGesture and ThoughtfulHeadShake.
+  Example message:
+  {example}
 `;
 
-const prompt = ChatPromptTemplate.fromMessages([
+export const prompt = ChatPromptTemplate.fromMessages([
   ["ai", template],
   ["human", "{question}"],
 ]);
@@ -26,8 +29,8 @@ const model = new ChatOpenAI({
   openAIApiKey: process.env.OPENAI_API_KEY || "-",
   modelName: process.env.OPENAI_MODEL || "davinci",
   temperature: 0.2,
-},{
-//  baseURL:process.env.OPENAI_API_URL || "https://api.openai.com",
+}, {
+  //  baseURL:process.env.OPENAI_API_URL || "https://api.openai.com",
 });
 
 const parser = StructuredOutputParser.fromZodSchema(
@@ -53,5 +56,28 @@ const parser = StructuredOutputParser.fromZodSchema(
 
 
 const openAIChain = prompt.pipe(model).pipe(parser);
+
+/**
+ * @param {string} question 
+ * @returns 
+ */
+export function invokeLLM(question) {
+  return openAIChain.invoke({
+    question,
+    format_instructions: parser.getFormatInstructions(),
+    example: `{
+    messages:[
+  {
+    "text": "你好，我是Jack，你的助手。",
+    "facialExpression": "default",
+    "animation": "Idle"
+  }
+]
+    }`
+  }).catch(error => {
+    console.log(error);
+    return { messages: defaultResponse }
+  })
+}
 
 export { openAIChain, parser };

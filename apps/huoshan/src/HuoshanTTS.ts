@@ -3,6 +3,22 @@ import { HuoshanClient } from './HuoshanClient'
 import EventEmitter from 'events'
 import { nanoid } from 'nanoid'
 
+type TTSAddition = {
+  frontend: {
+    phonemes: Array<{
+      phone: string
+      start_time: number
+      end_time: number
+    }>
+    words:Array<{
+      word: string
+      start_time: number
+      end_time: number
+      unit_type:"mark"|"text"
+    }>
+  }
+}
+
 export class HuoshanTTS {
   private static readonly WSS_URL =
     'wss://openspeech.bytedance.com/api/v1/tts/ws_binary'
@@ -93,8 +109,11 @@ export class HuoshanTTS {
    * @param text 
    * @returns 
    */
-  public async tts(text: string): Promise<Buffer> {
-    const url = `/tts` 
+  public async tts(text: string): Promise<{
+    data: Buffer,
+    addition:TTSAddition
+  }> {
+    const url = `/v1/tts` 
     const config = this.client.getConfig()
 
     const payload = {
@@ -109,7 +128,7 @@ export class HuoshanTTS {
         audio: this.audioConfig,
         request: {
             reqid: nanoid(),
-            text,
+            text, 
             "text_type": "plain",
             "operation": "query",
             "silence_duration": "125",
@@ -120,18 +139,25 @@ export class HuoshanTTS {
     }
     const response = await this.client.http(url, payload)
     if (response.status !== 200) {
-      throw new Error(`Failed to get TTS result: ${response.status}`)
+      const me = await response.text()
+      
+      throw new Error(`Failed to get TTS result: ${response.status} ${me}`)
     }
     const json = await response.json() as {
       data:string , 
       message:string, 
+      addition:{frontend:string}, 
     }
     if(json.message!=='Success'){
       throw new Error(`Failed to get TTS result: ${json.message}`)
     }
     // base64 转buffer
     const buffer = Buffer.from(json.data, 'base64')
-    return buffer
+    const frontend = JSON.parse(json.addition.frontend) as TTSAddition['frontend']
+    return {
+      data: buffer,
+      addition:{frontend}
+    }
   }
 
   public async stop(): Promise<void> {

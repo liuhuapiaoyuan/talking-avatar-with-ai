@@ -137,7 +137,8 @@ export class HuoshanClient extends EventEmitter {
 
   //https://openspeech.bytedance.com/api/v1/tts
   public async http(url:string,data?:Record<string,any>){
-    return fetch(`https://openspeech.bytedance.com/api${url}`,{
+    const link = `https://openspeech.bytedance.com/api${url}`
+    return fetch(link,{
       method: 'POST',
       headers: {
         'Authorization': 'Bearer;' + this.config.token,
