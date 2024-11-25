@@ -1,44 +1,75 @@
 import { useEffect, useRef } from "react";
 import { useSpeech } from "../hooks/useSpeech";
-function base64ToBuffer(base64) {
-  const binary_string = window.atob(base64);
-  const len = binary_string.length;
+function base64ToBlob(base64, fileType) {
+  // let typeHeader = 'data:audio/' + fileType + ';base64,'; // 定义base64 头部文件类型
+  // let audioSrc = typeHeader + base64; // 拼接最终的base64
+  // let arr = audioSrc.split(',');
+  // let array = arr[0].match(/:(.*?);/);
+  // let mime = (array && array.length > 1 ? array[1] : type) || type;
+  // let bytes = window.atob(arr[1]);
+  // let ab = new ArrayBuffer(bytes.length);
+  // let ia = new Uint8Array(ab);
+  // for (let i = 0; i < bytes.length; i++) {
+  //   ia[i] = bytes.charCodeAt(i);
+  // }
+  // console.log("mimemimemime", mime)
+  // return new Blob([ab], {
+  //   type: mime
+  // });
+  const binaryString = atob(base64);
+  const len = binaryString.length;
   const bytes = new Uint8Array(len);
   for (let i = 0; i < len; i++) {
-    bytes[i] = binary_string.charCodeAt(i);
+    bytes[i] = binaryString.charCodeAt(i);
   }
-  return bytes.buffer;
+  const arrayBuffer = bytes.buffer;
+  return new Blob([arrayBuffer], { type: 'audio/mp3' });
 }
 export const ChatInterface = ({ hidden, ...props }) => {
   const input = useRef();
-  const { tts, loading, audioRef,message, asrText,onMessagePlayed,startRecording, stopRecording, recording } = useSpeech();
-  
+  const { tts, loading, audioRef, message, asrText, onMessagePlayed, startRecording, stopRecording, recording } = useSpeech();
+
   const first = useRef(true);
 
-  useEffect(()=>{
+  useEffect(() => {
     if (message) {
       // message.audio
-      const buffer = base64ToBuffer(message.audio);
-      const audioBlob = new Blob([buffer], { type: 'audio/mp3' });
-      const audioUrl = URL.createObjectURL(audioBlob);
+      //const audioBlob = base64ToBlob(message.audio, 'mp3');
+      //const buffer = new Uint8Array(message.audio.data);
+
+      //const audioBlob = new Blob([buffer], { type: 'audio/mp3' });
+      //const audioUrl = URL.createObjectURL( new Blob([buffer.buffer], { type: 'audio/mp3' }));
       // base64转buffer
 
-      //const audioUrl = "data:audio/mp3;base64," + message.audio
-      audioRef.current.src = audioUrl
-      audioRef.current.play()
-      audio.onended = onMessagePlayed;
+      const audioUrl = "data:audio/mp3;base64," + message.audio
+      try {
+        audioRef.current.src = audioUrl
+        audioRef.current.load()
+        audioRef.current.play()
+        audioRef.current.onended = ()=>{
+          URL.revokeObjectURL(audioUrl)
+          onMessagePlayed()
+        }
+      } catch (error) {
+        console.error(error)
+        onMessagePlayed()
+      }
     }
-  },[message])
+  }, [message])
   const triggerAudio = () => {
     if (!first.current) {
       return;
     }
-    first.current = false;
-    const audio = audioRef.current;
-    audio.play();
-    setTimeout(() => {
-      audio.pause();
-    }, 20);
+    try {
+      first.current = false;
+      const audio = audioRef.current;
+      audio.play();
+      setTimeout(() => {
+        audio.pause();
+      }, 20);
+    } catch (error) {
+
+    }
   }
 
   const sendMessage = () => {
@@ -59,20 +90,19 @@ export const ChatInterface = ({ hidden, ...props }) => {
       <div className="self-start backdrop-blur-md bg-white bg-opacity-50 p-4 rounded-lg">
         <h1 className="font-black text-xl text-gray-700">数字人DEMO</h1>
         <p className="text-gray-600">
-          {recording  ?  (showAsr): (loading ? "思考中..." : "输入内容或者语音来跟我对话吧。")}
-           
+          {recording ? (showAsr) : (loading ? "思考中..." : "输入内容或者语音来跟我对话吧。")}
+
         </p>
       </div>
       <div className="w-full flex flex-col items-end justify-center gap-4"></div>
       <div className="flex items-center gap-2 pointer-events-auto max-w-screen-sm w-full mx-auto">
         <button
-          onClick={()=>{
+          onClick={() => {
             triggerAudio()
             recording ? stopRecording() : startRecording()
           }}
-          className={`bg-gray-500 hover:bg-gray-600 text-white p-4 px-4 font-semibold uppercase rounded-md ${
-            recording ? "bg-red-500 hover:bg-red-600" : ""
-          } ${loading || message ? "cursor-not-allowed opacity-30" : ""}`}
+          className={`bg-gray-500 hover:bg-gray-600 text-white p-4 px-4 font-semibold uppercase rounded-md ${recording ? "bg-red-500 hover:bg-red-600" : ""
+            } ${loading || message ? "cursor-not-allowed opacity-30" : ""}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -103,9 +133,8 @@ export const ChatInterface = ({ hidden, ...props }) => {
         <button
           disabled={loading || message}
           onClick={sendMessage}
-          className={`bg-gray-500 w-20 hover:bg-gray-600 text-white p-4   font-semibold uppercase rounded-md ${
-            loading || message ? "cursor-not-allowed opacity-30" : ""
-          }`}
+          className={`bg-gray-500 w-20 hover:bg-gray-600 text-white p-4   font-semibold uppercase rounded-md ${loading || message ? "cursor-not-allowed opacity-30" : ""
+            }`}
         >
           发送
         </button>

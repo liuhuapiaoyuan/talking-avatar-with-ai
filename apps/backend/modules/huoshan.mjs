@@ -38,7 +38,7 @@ export async function* batchConvertTextToSpeech({messages}) {
       const { data,addition:{frontend:{phonemes}} } = await convertTextToSpeech({ text: message.text });
       const mouthCues = phonemes.map(z => ({
         start: z.start_time,
-        end: z.end_time,
+        end: z.end_time, 
         value: z.phone
       }));
       //转base64
@@ -48,8 +48,8 @@ export async function* batchConvertTextToSpeech({messages}) {
       console.error(`Error while processing message ${index}:`, error);
       yield { ...message, error: true, errorMessage: error.message };
     }
-  }
-
+  } 
+ 
 }
   
 export {convertTextToSpeech}
