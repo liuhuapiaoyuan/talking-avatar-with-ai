@@ -52,12 +52,13 @@ export const ChatInterface = ({ hidden, ...props }) => {
   }
 
   const showAsr = asrText.length > 0 ? asrText : "请说话...";
+  const lastMessage = (message?.text?.length>0) ? <span className=" font-bold">{message.text}</span> : "输入内容或者语音来跟我对话吧。";
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 z-10 flex justify-between p-4 flex-col pointer-events-none">
       <div className="self-start backdrop-blur-md bg-white bg-opacity-50 p-4 rounded-lg">
         <h1 className="font-black text-xl text-gray-700">数字人DEMO</h1>
         <p className="text-gray-600">
-          {recording ? (showAsr) : (loading ? "思考中..." : "输入内容或者语音来跟我对话吧。")}
+          {recording ? (showAsr) : (loading ? "思考中..." : lastMessage)}
 
         </p>
       </div>

@@ -15,7 +15,8 @@ const SpeechContext = createContext();
 
 
 
-function connectWebSocket() {
+async function connectWebSocket() {
+  await fetch(`${backendUrl}`)
   // 获得当前请求
   const currentUrl = new URL(window.location.href);
   const wsurl = `${currentUrl.protocol === 'https:' ? 'wss' : 'ws'}://${currentUrl.host}${backendUrl}/ws`;

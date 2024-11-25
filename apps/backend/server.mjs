@@ -1,65 +1,86 @@
 import cors from "cors";
 import express from "express";
-import { invokeLLM } from "./modules/openAI.mjs";
-import { sendDefaultMessages } from "./modules/defaultMessages.mjs";
 import http from "http";
 import { server as WebSocketServer } from 'websocket';
 import { HuoshanASR, HuoshanClient } from 'huoshan-audio'
 import { batchConvertTextToSpeech } from "./modules/huoshan.mjs";
+import session from 'express-session'
+import { Bot } from "./modules/bot.mjs";
+
+import dotenv from 'dotenv'
+dotenv.config()
+
+const BOT ={}
+
+/**
+ * 
+ * @param {*} req 
+ * @returns {Bot} bot
+ */
+function getBot(req){
+  const bot =  BOT[req.sessionID] || new Bot()
+  BOT[req.sessionID] = bot
+  return bot
+}
 
 
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+const sessionStore = session({
+  name: "ai-human-id",
+  secret: 'your-secret-key', // 用于签名 session ID 的密钥
+  resave: false, // 强制保存未修改的 session
+  saveUninitialized: true, // 保存未初始化的 session
+  cookie: { secure: false, maxAge: 24 * 60 * 1000 }
+});
+// 配置 session
+app.use(sessionStore);
+
+
+
+
+
+
+app.post("/", async (res) => {
+  res.send({code:0});
+}); 
 
 
 app.post("/tts", async (req, res) => {
   const userMessage = await req.body.message;
-  const defaultMessages = await sendDefaultMessages({ userMessage });
-  if (defaultMessages) {
-    res.send({ messages: defaultMessages });
-    return;
-  }
-  let openAImessages = await invokeLLM(userMessage)
+  const bot = getBot(req)
+  const result =await  bot.chat(userMessage)
   const messages = []
-  const generator = batchConvertTextToSpeech({ messages: openAImessages.messages })
+  const generator = batchConvertTextToSpeech({ messages: result })
   for await (const message of generator) {
     messages.push(message)
   }
   res.send({ messages: messages });
-});
+}); 
 
-// app.post("/sts", async (req, res) => {
-//   const base64Audio = req.body.audio;
-//   const audioData = Buffer.from(base64Audio, "base64");
-//   const userMessage = await convertAudioToText({ audioData });
-//   let openAImessages;
-//   try {
-//     openAImessages = await openAIChain.invoke({
-//       question: userMessage,
-//       format_instructions: parser.getFormatInstructions(),
-//     });
-//   } catch (error) { 
-//     openAImessages = {messages:defaultResponse};
-//   }
-//   openAImessages = await lipSync({ messages: openAImessages.messages });
-//   res.send({ messages: openAImessages });
-// });
 
-// app.listen(port, () => {
-//   console.log(`Jack are listening on port ${port}`);
-// });
 
 const server = http.createServer(app);
-// 创建 WebSocket 服务器
 const wsServer = new WebSocketServer({
   httpServer: server,
   autoAcceptConnections: false,
 });
 
 wsServer.on('request', async request => {
+  let sessionId = request.cookies.find(z=>z.name==='ai-human-id')?.value
+  if(sessionId?.substring(0, 2) === 's:') {
+    sessionId = sessionId.slice(2,sessionId.indexOf("."))
+  }
+  if(!sessionId){
+    request.reject(400, 'no session id')
+  }
   const connection = request.accept(null, request.origin);
+
+  const bot = getBot({sessionID:sessionId})
+
+
   const huoshan = new HuoshanASR(new HuoshanClient({
     appid: process.env.ASR_HUOSHAN_APPID,
     token: process.env.ASR_HUOSHAN_TOKEN,
@@ -80,8 +101,8 @@ wsServer.on('request', async request => {
       action: 'gpt:start'
     }))
     const question = await huoshan.stop()
-    let openAImessages = await invokeLLM(question)
-    const generator = batchConvertTextToSpeech({ messages: openAImessages.messages })
+    let openAImessages = await bot.chat(question)
+    const generator = batchConvertTextToSpeech({ messages: openAImessages })
     for await (const message of generator) {
       connection.send(JSON.stringify({
         action: 'gpt:chunk',
@@ -90,19 +111,14 @@ wsServer.on('request', async request => {
     }
     connection.send(JSON.stringify({
       action: 'gpt:end',
-    }))
-    // openAImessages = await lipSync({ messages: openAImessages.messages });
-    // connection.send(JSON.stringify({
-    //   action: 'gpt:end',
-    //   messages: openAImessages
-    // }))
+    })) 
   }
-  function createTimmer() {
+  function createTimmer(delay = 5000) {
     if (!timmer) {
       timmer = setTimeout(() => {
         stopAsr()
         timmer = null
-      }, 5000) 
+      }, delay) 
     }
   }
 
@@ -117,7 +133,7 @@ wsServer.on('request', async request => {
           text: text
         }
       ))
-      createTimmer()
+      createTimmer(1000)
     }
   })
 
@@ -132,8 +148,8 @@ wsServer.on('request', async request => {
           connection.send(JSON.stringify({
             action: 'asr:start'
           }))
-          // 启动定时器
-          createTimmer()
+          // 启动定时器 首次5秒
+          createTimmer(5000)
         } else if (data.action == 'stop') {
           timmer && clearTimeout(timmer)
           stopAsr()

@@ -21,7 +21,7 @@ const template = `
 `;
 
 export const prompt = ChatPromptTemplate.fromMessages([
-  ["ai", template],
+  ['system', template],
   ["human", "{question}"],
 ]);
 
@@ -33,7 +33,7 @@ const model = new ChatOpenAI({
   //  baseURL:process.env.OPENAI_API_URL || "https://api.openai.com",
 });
 
-const parser = StructuredOutputParser.fromZodSchema(
+const outputParser = StructuredOutputParser.fromZodSchema(
   z.object({
     messages: z.array(
       z.object({
@@ -55,7 +55,7 @@ const parser = StructuredOutputParser.fromZodSchema(
 );
 
 
-const openAIChain = prompt.pipe(model).pipe(parser);
+const openAIChain = prompt.pipe(model).pipe(outputParser);
 
 /**
  * @param {string} question 
@@ -64,7 +64,7 @@ const openAIChain = prompt.pipe(model).pipe(parser);
 export function invokeLLM(question) {
   return openAIChain.invoke({
     question,
-    format_instructions: parser.getFormatInstructions(),
+    format_instructions: outputParser.getFormatInstructions(),
     example: `{
     messages:[
   {
@@ -80,4 +80,8 @@ export function invokeLLM(question) {
   })
 }
 
-export { openAIChain, parser };
+
+
+
+
+export { openAIChain, outputParser as parser };

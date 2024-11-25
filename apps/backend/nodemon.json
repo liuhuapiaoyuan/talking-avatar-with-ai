@@ -1,5 +1,5 @@
 {
-    "watch": ["src/**/*.mjs",".env","server.mjs"],
+    "watch": ["modules",".env","server.mjs"],
     "ext": "js,json,mjs,.env",
     "ignore": ["test"],
     "exec": "node server.mjs"
