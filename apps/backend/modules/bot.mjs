@@ -6,6 +6,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import {  PromptTemplate } from "@langchain/core/prompts";
 import { StructuredOutputParser } from "langchain/output_parsers";
 import dotenv from 'dotenv'
+import { defaultResponse } from "./defaultMessages.mjs";
 dotenv.config()
 const PROMPT = `
 You are an AI assistant named 'Jaker'. 
@@ -92,15 +93,20 @@ export class Bot {
    * @returns 
    */
   async chat(question) {
-    const {chat_history}  = await this.memory.loadMemoryVariables({}) ; // 加载记忆变量
-    const result = await this.openAIChainWithMemory.invoke({
-        format_instructions:outputParser.formatInstructions,
-        example:EXAMPLE,
-        input: question,
-        chat_history
-    });
-    const text = result.text.messages.map((m) => m.text).join("\n");
-    this.memory.saveContext({input:question},{output:text})
-    return result.text.messages; // 返回结果
+    try{
+
+      const {chat_history}  = await this.memory.loadMemoryVariables({}) ; // 加载记忆变量
+      const result = await this.openAIChainWithMemory.invoke({
+          format_instructions:outputParser.formatInstructions,
+          example:EXAMPLE,
+          input: question,
+          chat_history
+      });
+      const text = result.text.messages.map((m) => m.text).join("\n");
+      this.memory.saveContext({input:question},{output:text})
+      return result.text.messages; // 返回结果
+    }catch(e){
+      return defaultResponse
+    }
   }
 }

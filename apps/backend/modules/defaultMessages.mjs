@@ -30,7 +30,7 @@ async function sendDefaultMessages({ userMessage }) {
 
 const defaultResponse = [
   {
-    text: "很抱歉，我不知道你在说什么，要不您在问我一次?",
+    text: "很抱歉，可能出错了，您重新说一下可以吗?",
     facialExpression: "sad",
     animation: "Idle",
   },

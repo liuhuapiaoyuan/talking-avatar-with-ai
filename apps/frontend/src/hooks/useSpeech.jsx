@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useReducer, useState } from "react";
 import { AudioPlayerQueue } from "../lib/AudioPlayerQueue";
 
 const backendUrl = "/api";
@@ -31,8 +31,7 @@ async function connectWebSocket(onclose) {
       onclose?.()
       retryCount+=1 
     }
-    ws.onerror = (error) => {
-       
+    ws.onerror = (error) => {       
       reject(error);
     }
   }
@@ -66,12 +65,23 @@ async function* loadSSE(readableStream) {
     }
   }
 }
+
+const messagesReducer = (state, action) => {
+  switch (action.type) {
+    case 'ADD_MESSAGE':
+      return [...state, action.payload];
+    case 'REMOVE_MESSAGE':
+      return state.slice(1);
+    default:
+      return state;
+  }
+};
+
 export const SpeechProvider = ({ children }) => {
   const audioRef = useRef()
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(new AudioContext({ sampleRate: 16000 }));
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState();
+  const [messages, dispatch] = useReducer(messagesReducer, []);
   const [loading, setLoading] = useState(false);
   const [asrText,setAsrText] = useState("")
   const ws =  useRef(null)
@@ -135,7 +145,7 @@ export const SpeechProvider = ({ children }) => {
           
           setLoading(false)
         } else if (data.action === "gpt:chunk") {
-          setMessages((messages) => [...messages, data.text]);
+          dispatch({ type: 'ADD_MESSAGE', payload: data.text });
         }
       };
     })
@@ -180,20 +190,17 @@ export const SpeechProvider = ({ children }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ message }),
-      });
-      // const response = (await data.json()).messages;
-      // setMessages((messages) => [...messages, ...response]);
-          // 使用生成器函数读取 SSE 数据
-        let newMessage={}
-      for await (const item of loadSSE(response.body)) {
+      }); 
+      const generator = await loadSSE(response.body);
+      for await (const item of generator) {
         let chunk = item.slice("data: ".length).trim();
         if (chunk.startsWith("body: ")) {
           newMessage = JSON.parse(chunk.slice("body: ".length).trim());
         }else if(chunk.startsWith("lipsync: ")){
           newMessage.lipsync = JSON.parse(chunk.slice("lipsync: ".length).trim());
         }else if(chunk.startsWith("audio: ")){
-          newMessage.audio = chunk.slice("audio: ".length).trim();
-          setMessages((messages) => [...messages, newMessage]);
+          newMessage.audio = chunk.slice("audio: ".length);
+          dispatch({ type: 'ADD_MESSAGE', payload: newMessage });
         }
       } 
     } catch (error) {
@@ -204,20 +211,13 @@ export const SpeechProvider = ({ children }) => {
   };
 
   const onMessagePlayed = () => {
-    setMessages((messages) => messages.slice(1));
+    dispatch({ type: 'REMOVE_MESSAGE' });
   };
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      setMessage(messages[0]);
-    } else {
-      setMessage(null);
-    }
-  }, [messages]);
+  const message = messages[0];
 
   return (
     <>
-        <audio ref={audioRef} style={{display:"none"}} id="audio" ></audio>
+    <audio ref={audioRef} style={{display:"none"}} id="audio" ></audio>
     <SpeechContext.Provider
       value={{
         audioRef,

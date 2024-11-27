@@ -1,5 +1,5 @@
 # 第一阶段: 编译React应用
-FROM node:18-alpine AS build
+FROM node:22-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -23,7 +23,7 @@ FROM nginx:alpine
 RUN rm /etc/nginx/conf.d/default.conf
 
 # 复制编译后的文件到Nginx的html目录
-COPY --from=build /app/apps/frontend/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 # 拷贝自定义的Nginx配置文件到Nginx配置目录
 COPY ./docker/frontend.nginx.conf /etc/nginx/conf.d/default.conf.template

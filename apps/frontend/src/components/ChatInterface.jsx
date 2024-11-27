@@ -7,20 +7,24 @@ export const ChatInterface = ({ hidden, ...props }) => {
   const first = useRef(true);
 
   useEffect(() => {
-    if (message) { 
+    if (message?.audio) { 
       const audioUrl = "data:audio/mp3;base64," + message.audio
       try {
         audioRef.current.src = audioUrl
-        audioRef.current.load()
         audioRef.current.play()
         audioRef.current.onended = ()=>{
-          URL.revokeObjectURL(audioUrl)
+          onMessagePlayed()
+        }
+        audioRef.current.onerror = (e) => {
+          console.error("audio error",e)
           onMessagePlayed()
         }
       } catch (error) {
         console.error(error)
         onMessagePlayed()
       }
+    }else{
+      onMessagePlayed()
     }
   }, [message])
   const triggerAudio = () => {
